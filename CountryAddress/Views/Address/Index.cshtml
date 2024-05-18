@@ -1,0 +1,87 @@
+﻿@model CountryAddress.Models.AddressViewModel
+
+<form id="address-form">
+    <label for="country">Country:</label>
+    <select id="country" asp-for="SelectedCountry" asp-items="Model.Countries">
+        <option value="">-- Select Country --</option>
+    </select>
+
+    <label for="state">State:</label>
+    <select id="state" asp-for="SelectedState" asp-items="Model.States">
+        <option value="">-- Select State --</option>
+    </select>
+
+    <label for="district">District:</label>
+    <select id="district" asp-for="SelectedDistrict" asp-items="Model.Districts">
+        <option value="">-- Select District --</option>
+    </select>
+
+    <button type="submit">Submit</button>
+</form>
+
+<table>
+    <thead>
+        <tr>
+           
+            <th>Country</th>
+            <th>State</th>
+            <th>District</th>
+        </tr>
+    </thead>
+    <tbody id="address-table">
+        <!-- Table content will be dynamically updated here -->
+    </tbody>
+</table>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#country').change(function () {
+                var selectedCountry = $(this).val();
+                $.get('/Address/GetStates', { country: selectedCountry }, function (data) {
+                    $('#state').empty();
+                    $('#state').append($('<option>').text('-- Select State --').val(''));
+                    $.each(data, function (i, item) {
+                        $('#state').append($('<option>').text(item.text).val(item.value));
+                    });
+                });
+            });
+
+            $('#state').change(function () {
+                var selectedState = $(this).val();
+                $.get('/Address/GetDistricts', { state: selectedState }, function (data) {
+                    $('#district').empty();
+                    $('#district').append($('<option>').text('-- Select District --').val(''));
+                    $.each(data, function (i, item) {
+                        $('#district').append($('<option>').text(item.text).val(item.value));
+                    });
+                });
+            });
+
+            // Update table content on form submission
+            $('#address-form').submit(function (event) {
+                event.preventDefault(); // Prevent form submission
+
+                var selectedCountry = $('#country').val();
+                var selectedState = $('#state').val();
+                var selectedDistrict = $('#district').val();
+
+                // Send AJAX request to update table content based on selected dropdown values
+                $.get('/Address/GetAddresses', { country: selectedCountry, state: selectedState, district: selectedDistrict }, function (data) {
+                    // Append new row to the table body with the submitted values
+                    $('#address-table').empty(); // Clear existing data
+                    $.each(data, function (i, addresses) {
+                        $('#address-table').append(
+                            $('<tr>').append(
+                                $('<td>').text(addresses.country),
+                                $('<td>').text(addresses.state),
+                                $('<td>').text(addresses.district)
+                            )
+                        );
+                    });
+                });
+            });
+        });
+    </script>
+}
